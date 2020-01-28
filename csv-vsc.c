@@ -2,7 +2,7 @@
 #include <stdlib.h>
 #include <string.h>
 
-void seekWord(FILE *fpIN, int size, FILE *fpOUT, int offset)
+void seekWord(FILE *fpIN, long double size, FILE *fpOUT, long double offset)
 {
     if (offset >= size)
     {
@@ -11,7 +11,7 @@ void seekWord(FILE *fpIN, int size, FILE *fpOUT, int offset)
     
     //initialise a "dynamic" (ish) array
     char *wordtoprint;
-    wordtoprint = malloc(25 * sizeof(char));
+    wordtoprint = calloc(10, sizeof(char));
 
     //seek back until we find a comma, adding each char to the array
     int i = 0;
@@ -23,10 +23,16 @@ void seekWord(FILE *fpIN, int size, FILE *fpOUT, int offset)
         wordtoprint[i] = tmpchar;
         i++;
         offset++;
+
+        //check if memory is getting tight
+        if (i % 11 == 0 && i != 0)
+        {
+            wordtoprint = realloc(wordtoprint, (2*i)*sizeof(char));
+        }
     }
 
     //reverse the string and print to the output file
-    for (int j = sizeof(wordtoprint); j >= 0; j--)
+    for (int j = strlen(wordtoprint); j >= 0; j--)
     {
         //filter out unwanted outputs
         if (wordtoprint[j] != ',' && wordtoprint[j] != '\n')
@@ -36,6 +42,7 @@ void seekWord(FILE *fpIN, int size, FILE *fpOUT, int offset)
     }
     fprintf(fpOUT, ",");
 
+    free(wordtoprint);
     //recurse, passing the increased offset
     seekWord(fpIN, size, fpOUT, offset);
 }
@@ -44,7 +51,7 @@ int main(int argc, char *argv[])
 {
     char *filename;
     int ignoreFirstLine;
-    int size;
+    long double size;
 
     //parse command line switches -i : ignore first line
     if (argc == 1)
@@ -64,7 +71,7 @@ int main(int argc, char *argv[])
         else
         {
             //assume this is the filename
-            filename = malloc(sizeof(argv[i]));
+            filename = malloc(strlen(argv[i]));
             strcpy(filename, argv[i]);
             printf("Filename to open: %s\n", filename);
         }
@@ -91,13 +98,14 @@ int main(int argc, char *argv[])
         fseek(fpIN, 0, SEEK_END);
         size = ftell(fpIN);
     }
+    printf("Filesize: %.0Lf chars\n", size);
 
     //work out if it has .csv at end then rename - this isn't an elegent solution!
     char *outfilename;
-    int szFileName = sizeof(filename);
-    if (filename[szFileName-4]=='.' && filename[szFileName-3]=='c' && filename[szFileName-2]=='s' && filename[szFileName-1]=='v')
+    int szFileName = strlen(filename);
+    if (strstr(filename, ".csv"))
     {
-        outfilename = malloc(sizeof(filename) * sizeof(char) + 8);
+        outfilename = malloc(szFileName + 9);
         strcpy(outfilename, filename);
         outfilename[szFileName-4] = '_';
         outfilename[szFileName-3] = 'r';
@@ -108,7 +116,7 @@ int main(int argc, char *argv[])
     }
     else
     {
-        outfilename = malloc(sizeof(filename) * sizeof(char) + 8);
+        outfilename = malloc(szFileName + 8);
         strcpy(outfilename, filename);
         strcat(outfilename, "_reverse.csv");
         printf("Output file: %s\n", outfilename);

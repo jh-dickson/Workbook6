@@ -14,55 +14,52 @@ void seekWord(FILE *fpIN, int size, FILE *fpOUT, int offset)
     wordtoprint = malloc(25 * sizeof(char));
 
     //seek back until we find a comma, adding each char to the array
-    int i;
-    if (offset = 0)
-    {
-        i = 1;
-    }
-    else
-    {
-        i = offset + 1;
-    }
-    
-
+    int i = 0;
     char tmpchar;
-    while (tmpchar != ',' && i > -size)
+    while (tmpchar != ',' && offset <= size)
     {
-        fseek(fpIN, -i, SEEK_END);
+        fseek(fpIN, -offset, SEEK_END);
         fscanf(fpIN, "%c", &tmpchar);
-        wordtoprint[-1-i] = tmpchar;
-        i--;
+        wordtoprint[i] = tmpchar;
+        i++;
+        offset++;
     }
 
-    //print it out to the file
-    for (int j = (sizeof(char)*sizeof(wordtoprint)); j > 0; j--)
+    //reverse the string and print to the output file
+    for (int j = sizeof(wordtoprint); j >= 0; j--)
     {
-        if (wordtoprint[j] == ',')
+        //filter out unwanted outputs
+        if (wordtoprint[j] != ',' && wordtoprint[j] != '\n')
         {
-            //ignore
-        }
-        else
-        {
-            printf("%c", wordtoprint[j]);
             fprintf(fpOUT, "%c", wordtoprint[j]);
         }
     }
     fprintf(fpOUT, ",");
 
     //recurse, passing the increased offset
-    offset += (sizeof(char)*sizeof(wordtoprint));
     seekWord(fpIN, size, fpOUT, offset);
 }
 
 int main(int argc, char *argv[])
 {
-    //parse command line switches -i : ignore first line
     char *filename;
+    int ignoreFirstLine;
+    int size;
+
+    //parse command line switches -i : ignore first line
+    if (argc == 1)
+    {
+        printf("Usage: [executable name] [file name] [options]\n");
+        printf("Options: -i ignore first line\n");
+        exit(-1);
+    }
     for (int i = 1; i < argc; i++)
     {
         if (strcmp(argv[i], "-i") == 0)
         {
             /* TODO */
+            printf("Ignoring first line\n");
+            ignoreFirstLine = 1;
         }
         else
         {
@@ -75,10 +72,27 @@ int main(int argc, char *argv[])
 
     //load file pointer and seek to end
     FILE *fpIN = fopen(filename, "r");
-    fseek(fpIN, 0, SEEK_END);
-    int size = ftell(fpIN);
+    if (ignoreFirstLine == 1)
+    {   
+        //count until the first newline char
+        char tmpchar;
+        int count = 0;
+        while (tmpchar != '\n')
+        {
+            fscanf(fpIN, "%c", &tmpchar);
+            count++;
+            fseek(fpIN, count, SEEK_SET);
+        }
+        fseek(fpIN, 0, SEEK_END);
+        size = ftell(fpIN) - count;
+    }
+    else
+    {
+        fseek(fpIN, 0, SEEK_END);
+        size = ftell(fpIN);
+    }
 
-    //work out if it has .csv at end - this isn't an elegent solution!
+    //work out if it has .csv at end then rename - this isn't an elegent solution!
     char *outfilename;
     int szFileName = sizeof(filename);
     if (filename[szFileName-4]=='.' && filename[szFileName-3]=='c' && filename[szFileName-2]=='s' && filename[szFileName-1]=='v')
@@ -102,5 +116,5 @@ int main(int argc, char *argv[])
     
     FILE *fpOUT = fopen(outfilename, "w");
     seekWord(fpIN, size, fpOUT, 0);
-    
+
 }

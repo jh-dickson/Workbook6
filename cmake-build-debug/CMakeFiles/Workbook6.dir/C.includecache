@@ -1,0 +1,18 @@
+#IncludeRegexLine: ^[ 	]*[#%][ 	]*(include|import)[ 	]*[<"]([^">]+)([">])
+
+#IncludeRegexScan: ^.*$
+
+#IncludeRegexComplain: ^$
+
+#IncludeRegexTransform: 
+
+/home/jhdickson/Git/Workbook6/csv-vsc.c
+stdio.h
+-
+stdlib.h
+-
+string.h
+-
+errno.h
+-
+

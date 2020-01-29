@@ -1,0 +1,3 @@
+/home/jhdickson/Git/Workbook6/cmake-build-debug/CMakeFiles/rebuild_cache.dir
+/home/jhdickson/Git/Workbook6/cmake-build-debug/CMakeFiles/Workbook6.dir
+/home/jhdickson/Git/Workbook6/cmake-build-debug/CMakeFiles/edit_cache.dir

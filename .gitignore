@@ -1,2 +1,6 @@
 
 *.csv
+
+cmake-build-debug/
+
+CMakeLists.txt

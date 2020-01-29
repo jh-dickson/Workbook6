@@ -1,27 +1,28 @@
 #include <stdio.h>
 #include <stdlib.h>
 #include <string.h>
-#include <errno.h>
 
-void seekWord(FILE *fpIN, long int size, FILE *fpOUT, long int offset)
+long seekWord(FILE *fpIN, long int size, FILE *fpOUT, long int offset)
 {
     if (offset >= size)
     {
-        return;
+        return -1;
     }
 
     //debug!
-    printf("Size: %ld, Offset: %ld, FileIN: %p, FileOUT: %p\n", size, offset, (void *)fpIN, (void *)fpOUT);
+    //printf("Size: %ld, Offset: %ld, FileIN: %p, FileOUT: %p\n", size, offset, (void *)fpIN, (void *)fpOUT);
     
     //initialise a "dynamic" (ish) array
     char *wordtoprint;
     wordtoprint = calloc(1, sizeof(char));
 
     //seek back until we find a comma, adding each char to the array
-    int i = 0;
-    char tmpchar;
+    size_t i = 0;
+    char tmpchar = ' ';
+    printf("Offset: %i Size %i\n",  (int)offset,  (int)size);
     while (tmpchar != ',' && offset <= size)
     {
+        printf("Looping in seekWord\n");
         fseek(fpIN, -offset, SEEK_END);
         fscanf(fpIN, "%c", &tmpchar);
         wordtoprint[i] = tmpchar;
@@ -30,27 +31,25 @@ void seekWord(FILE *fpIN, long int size, FILE *fpOUT, long int offset)
         //allocate more memory to the array for the next char
         wordtoprint = realloc(wordtoprint, i);
     }
-
     //reverse the string and print to the output file
-    for (int j = strlen(wordtoprint); j >= 0; j--)
+    for (unsigned long j = (strlen(wordtoprint) - 1); j >= 0; j--)
     {
         //filter out unwanted outputs
         if (wordtoprint[j] != ',' && wordtoprint[j] != '\n')
         {
-            fprintf(fpOUT, "%c", wordtoprint[j]);
+                fprintf(fpOUT, "%c", wordtoprint[j]);
         }
     }
     fprintf(fpOUT, ",");
 
     free(wordtoprint);
-    //recurse, passing the increased offset
-    seekWord(fpIN, size, fpOUT, offset);
+    return offset;
 }
 
 int main(int argc, char *argv[])
 {
     char *filename;
-    int ignoreFirstLine;
+    int ignoreFirstLine = 0;
     long int size;
 
     //parse command line switches -i : ignore first line
@@ -70,7 +69,7 @@ int main(int argc, char *argv[])
         else
         {
             //assume this is the filename
-            filename = malloc(strlen(argv[i]));
+            filename = calloc(strlen(argv[i]), sizeof(char));
             strcpy(filename, argv[i]);
             printf("Filename to open: %s\n", filename);
         }
@@ -88,7 +87,7 @@ int main(int argc, char *argv[])
     if (ignoreFirstLine == 1)
     {   
         //count until the first newline char
-        char tmpchar;
+        char tmpchar = ' ';
         int count = 0;
         while (tmpchar != '\n')
         {
@@ -111,7 +110,7 @@ int main(int argc, char *argv[])
     long unsigned int szFileName = strlen(filename);
     if (strstr(filename, ".csv"))
     {
-        outfilename = malloc(szFileName + 9);
+        outfilename = calloc(szFileName + 9, sizeof(char));
         strcpy(outfilename, filename);
         outfilename[szFileName-4] = '_';
         outfilename[szFileName-3] = 'r';
@@ -122,13 +121,22 @@ int main(int argc, char *argv[])
     }
     else
     {
-        outfilename = malloc(szFileName + 8);
+        outfilename = calloc(szFileName + 8, sizeof(char));
         strcpy(outfilename, filename);
         strcat(outfilename, "_reverse.csv");
         printf("Output file: %s\n", outfilename);
     }
     
-    FILE *fpOUT = fopen(outfilename, "w");
-    seekWord(fpIN, size, fpOUT, 0);
+    FILE *fpOUT = fopen(outfilename, "w"); 
+    long ret = 0;
+    while (ret != -1)
+    {
+        long offset = ret;
+        printf("Offset: %li\n", offset);
+        ret = seekWord(fpIN, size, fpOUT, offset);
+        printf("Ret: %li\n", ret);
+    }
 
+    fclose(fpIN);
+    fclose(fpOUT);
 }

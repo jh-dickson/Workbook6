@@ -11,7 +11,7 @@ void seekWord(FILE *fpIN, long double size, FILE *fpOUT, long double offset)
     
     //initialise a "dynamic" (ish) array
     char *wordtoprint;
-    wordtoprint = calloc(10,  sizeof(char));
+    wordtoprint = calloc(1,  sizeof(char));
 
     //seek back until we find a comma, adding each char to the array
     int i = 0;
@@ -25,10 +25,7 @@ void seekWord(FILE *fpIN, long double size, FILE *fpOUT, long double offset)
         offset++;
 
         //check if memory is getting tight
-        if (i % 11 == 0 && i != 0)
-        {
-            wordtoprint = realloc(wordtoprint, (2*i)*sizeof(char));
-        }
+        wordtoprint = realloc(wordtoprint, (i*sizeof(char)));
     }
 
     //reverse the string and print to the output file

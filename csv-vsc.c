@@ -11,7 +11,7 @@ void seekWord(FILE *fpIN, long double size, FILE *fpOUT, long double offset)
     
     //initialise a "dynamic" (ish) array
     char *wordtoprint;
-    wordtoprint = calloc(10, sizeof(char));
+    wordtoprint = calloc(10,  sizeof(char));
 
     //seek back until we find a comma, adding each char to the array
     int i = 0;

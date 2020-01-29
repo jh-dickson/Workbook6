@@ -2,19 +2,16 @@
 #include <stdlib.h>
 #include <string.h>
 
-long seekWord(FILE *fpIN, long int size, FILE *fpOUT, long int offset)
+void seekWord(FILE *fpIN, long double size, FILE *fpOUT, long double offset)
 {
     if (offset >= size)
     {
         return -1;
     }
-
-    //debug!
-    //printf("Size: %ld, Offset: %ld, FileIN: %p, FileOUT: %p\n", size, offset, (void *)fpIN, (void *)fpOUT);
     
     //initialise a "dynamic" (ish) array
     char *wordtoprint;
-    wordtoprint = calloc(1, sizeof(char));
+    wordtoprint = calloc(1,  sizeof(char));
 
     //seek back until we find a comma, adding each char to the array
     size_t i = 0;
@@ -28,8 +25,9 @@ long seekWord(FILE *fpIN, long int size, FILE *fpOUT, long int offset)
         wordtoprint[i] = tmpchar;
         i++;
         offset++;
-        //allocate more memory to the array for the next char
-        wordtoprint = realloc(wordtoprint, i);
+
+        //check if memory is getting tight
+        wordtoprint = realloc(wordtoprint, (i*sizeof(char)));
     }
     //reverse the string and print to the output file
     for (unsigned long j = (strlen(wordtoprint) - 1); j >= 0; j--)
@@ -49,8 +47,8 @@ long seekWord(FILE *fpIN, long int size, FILE *fpOUT, long int offset)
 int main(int argc, char *argv[])
 {
     char *filename;
-    int ignoreFirstLine = 0;
-    long int size;
+    int ignoreFirstLine;
+    long double size;
 
     //parse command line switches -i : ignore first line
     if (argc == 1)
@@ -63,6 +61,7 @@ int main(int argc, char *argv[])
     {
         if (strcmp(argv[i], "-i") == 0)
         {
+            /* TODO */
             printf("Ignoring first line\n");
             ignoreFirstLine = 1;
         }
@@ -77,13 +76,6 @@ int main(int argc, char *argv[])
 
     //load file pointer and seek to end
     FILE *fpIN = fopen(filename, "r");
-    if (fpIN == NULL)
-    {
-        printf("Failed to open file %s\n", filename);
-        perror("Error");
-        exit(-1);
-    }
-    
     if (ignoreFirstLine == 1)
     {   
         //count until the first newline char
@@ -103,11 +95,11 @@ int main(int argc, char *argv[])
         fseek(fpIN, 0, SEEK_END);
         size = ftell(fpIN);
     }
-    printf("Filesize: %ld chars\n", size);
+    printf("Filesize: %.0Lf chars\n", size);
 
     //work out if it has .csv at end then rename - this isn't an elegent solution!
     char *outfilename;
-    long unsigned int szFileName = strlen(filename);
+    int szFileName = strlen(filename);
     if (strstr(filename, ".csv"))
     {
         outfilename = calloc(szFileName + 9, sizeof(char));

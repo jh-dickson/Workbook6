@@ -4,48 +4,46 @@
 
 long int offset = 0;
 
-void seekWord(FILE *fpIN, long int size, FILE *fpOUT)
+int seekWord(FILE *fpIN, long int size, FILE *fpOUT)
 {
     if (offset >= size)
     {
         return -1;
     }
-
-    //debug!
-    //printf("Size: %ld, Offset: %ld, FileIN: %p, FileOUT: %p\n", size, offset, (void *)fpIN, (void *)fpOUT);
     
     //initialise a "dynamic" (ish) array
     char *wordtoprint;
-    wordtoprint = calloc(1,  sizeof(char));
+    wordtoprint = calloc(10,  sizeof(char *));
 
     //seek back until we find a comma, adding each char to the array
     int i = 0;
     char tmpchar = ' ';
     while (tmpchar != ',' && offset <= size)
     {
-        printf("Looping in seekWord\n");
         fseek(fpIN, -offset, SEEK_END);
-        fscanf(fpIN, "%c", &tmpchar);
-        printf("Error reading the file.\n");
-        exit(-1);
+        tmpchar = getc(fpIN);
         wordtoprint[i] = tmpchar;
         i++;
         offset++;
         //allocate more memory to the array for the next char
-        wordtoprint = realloc(wordtoprint, i);
+        wordtoprint = realloc(wordtoprint, i*sizeof(char *));
     }
+
     //reverse the string and print to the output file
-    for (unsigned long j = (strlen(wordtoprint) - 1); j >= 0; j--)
+    int wordlen = strlen(wordtoprint);
+    for (int j = wordlen; j >= 0; j--)
     {
-        //filter out unwanted outputs
-        if (wordtoprint[j] != ',' && wordtoprint[j] != '\n')
+        //filter out commas
+        if (wordtoprint[j] != ',')
         {
-                fprintf(fpOUT, "%c", wordtoprint[j]);
+            fputc(wordtoprint[j], fpOUT);
         }
     }
-    fprintf(fpOUT, ",");
+    fputc(',', fpOUT);
 
+    wordtoprint = NULL;
     free(wordtoprint);
+    return 0;
 }
 
 int main(int argc, char *argv[])
@@ -93,10 +91,10 @@ int main(int argc, char *argv[])
         int count = 0;
         while (tmpchar != '\n')
         {
-            fscanf(fpIN, "%c", &tmpchar);
+            tmpchar = getc(fpIN);
             count++;
-            fseek(fpIN, count, SEEK_SET);
         }
+        
         fseek(fpIN, 0, SEEK_END);
         size = ftell(fpIN) - count;
     }
@@ -130,23 +128,16 @@ int main(int argc, char *argv[])
     
     //loop until all of the words have been copied and reversed
     FILE *fpOUT = fopen(outfilename, "w");
-    while (offset <= size)
+    while (offset <= size )
     {
         if (showDebugOutput == 1)
         {
-            printf("\rFile size: %ld Reading at offset: %ld Current Progress: %ld%%", size, offset, (offset/size)*100);
+            printf("\rFile size: %ld Reading at offset: %ld", size, offset);
+            fflush(stdout);
         }
-        else
-        {
-            printf("\rCurrent Progress: %ld%%", (offset/size)*100);
-        }
-        fflush(stdout);
         seekWord(fpIN, size, fpOUT);
     }
-    printf("\n");
-    fclose(fpIN);
-    fclose(fpOUT);
-
+    printf("\nReversing Complete\n");
     fclose(fpIN);
     fclose(fpOUT);
 }
